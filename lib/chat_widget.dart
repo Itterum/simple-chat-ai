@@ -1,52 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:simple_chat_ai/chat_model.dart';
 import 'package:simple_chat_ai/logger.dart';
-import 'package:simple_chat_ai/model.dart';
 
-class MyChatApp extends StatefulWidget {
-  const MyChatApp({super.key});
+class ChatWidget extends StatefulWidget {
+  const ChatWidget({super.key});
 
   @override
-  MyChatAppState createState() => MyChatAppState();
+  ChatWidgetState createState() => ChatWidgetState();
 }
 
-class MyChatAppState extends State<MyChatApp> {
+class ChatWidgetState extends State<ChatWidget> {
   final TextEditingController _controller = TextEditingController();
-  final ChatProvide chat = ChatProvide();
-  final List<Chat> _chatMessages = [];
-  final String currentUser = "Ryan Gosling";
-  bool isLoading = false;
+  final Chat _chat = Chat(title: 'codeLlama:7b');
+  final String _currentUser = "Ryan Gosling";
+  final String _title = 'Ollama Chat';
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
 
-    chat.chatStream.listen((newChat) {
-      setState(() {
-        _chatMessages.add(newChat);
-      });
-    }, onError: (error) {
-      logger.warning('Error in chat stream: $error');
-    });
+    _chat.messageStream.listen(
+      (messages) {
+        setState(() {});
+      },
+      onError: (error) {
+        logger.warning('Error in chat stream: $error');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _chat.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ollama Chat'),
+        title: Text(_title),
         centerTitle: true,
       ),
       body: Column(
         children: [
-          if (isLoading) const LinearProgressIndicator(),
+          if (_isLoading) const LinearProgressIndicator(),
           Expanded(
-            child: _chatMessages.isEmpty
+            child: _chat.messages.isEmpty
                 ? const Center(child: Text('No messages yet'))
                 : ListView.builder(
-                    itemCount: _chatMessages.length,
+                    itemCount: _chat.messages.length,
                     itemBuilder: (context, index) {
-                      final chatMessage = _chatMessages[index];
-                      final isCurrentUser = chatMessage.name == currentUser;
+                      final message = _chat.messages[index];
+                      final isCurrentUser = message.sender == _currentUser;
                       return Align(
                         alignment: isCurrentUser
                             ? Alignment.centerRight
@@ -74,7 +83,7 @@ class MyChatAppState extends State<MyChatApp> {
                                 : CrossAxisAlignment.start,
                             children: [
                               Text(
-                                chatMessage.name ?? 'Unknown User',
+                                message.sender,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isCurrentUser
@@ -83,10 +92,21 @@ class MyChatAppState extends State<MyChatApp> {
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              Text(chatMessage.message ?? ''),
+                              !isCurrentUser && message == _chat.messages.last
+                                  ? StreamBuilder<String>(
+                                      stream: _simulateMessageTyping(
+                                          message.content),
+                                      builder: (context, snapshot) {
+                                        return Text(snapshot.data ?? '',
+                                            style:
+                                                const TextStyle(fontSize: 16));
+                                      },
+                                    )
+                                  : Text(message.content,
+                                      style: const TextStyle(fontSize: 16)),
                               const SizedBox(height: 5),
                               Text(
-                                chatMessage.time,
+                                DateFormat('HH:mm').format(message.timestamp),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: Colors.grey,
@@ -112,7 +132,7 @@ class MyChatAppState extends State<MyChatApp> {
                       ),
                       hintText: 'Enter your message...',
                       suffixIcon: IconButton(
-                        onPressed: isLoading ? null : _sendMessage,
+                        onPressed: _isLoading ? null : _sendMessage,
                         icon: const Icon(Icons.send),
                       ),
                     ),
@@ -126,17 +146,33 @@ class MyChatAppState extends State<MyChatApp> {
     );
   }
 
+  Stream<String> _simulateMessageTyping(String fullMessage) async* {
+    for (int i = 1; i <= fullMessage.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      yield fullMessage.substring(0, i);
+    }
+  }
+
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final userMessage = Message(
+      sender: _currentUser,
+      content: text,
+      timestamp: DateTime.now(),
+    );
+
+    _chat.addMessageToStream(userMessage);
+
+    _controller.clear();
+
     setState(() {
-      isLoading = true;
+      _isLoading = true;
     });
 
     try {
-      chat.sendMessage(currentUser, text);
-      _controller.clear();
+      await _chat.addMessage(_currentUser, text);
     } catch (e) {
       logger.warning('Failed to send message: $e');
 
@@ -147,7 +183,7 @@ class MyChatAppState extends State<MyChatApp> {
       }
     } finally {
       setState(() {
-        isLoading = false;
+        _isLoading = false;
       });
     }
   }
