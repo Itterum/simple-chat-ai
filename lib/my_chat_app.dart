@@ -135,7 +135,7 @@ class MyChatAppState extends State<MyChatApp> {
     });
 
     try {
-      await chat.sendMessage(currentUser, text);
+      chat.sendMessage(currentUser, text);
       _controller.clear();
     } catch (e) {
       logger.warning('Failed to send message: $e');

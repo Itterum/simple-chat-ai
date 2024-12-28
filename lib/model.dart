@@ -45,12 +45,6 @@ class ChatProvide {
         },
       );
 
-      _chats.add(Chat(
-        name: name,
-        message: message,
-        time: DateFormat('HH:mm').format(DateTime.now()),
-      ));
-
       _chatStreamController.add(Chat(
         name: name,
         message: message,
