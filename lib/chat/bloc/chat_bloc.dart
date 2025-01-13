@@ -1,56 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:simple_chat_ai/chat/bloc/chat_event.dart';
+import 'package:simple_chat_ai/chat/bloc/chat_state.dart';
+import 'package:simple_chat_ai/chat/models/chat_models.dart';
+import 'package:simple_chat_ai/chat/services/chat_service.dart';
+
+import 'package:simple_chat_ai/utils/logger.dart';
+
 import 'dart:convert';
-import 'package:simple_chat_ai/chat/chat_models.dart';
-import 'package:simple_chat_ai/logger.dart';
-import 'package:simple_chat_ai/chat/chat_service.dart';
-
-class ChatState {
-  final Chat chat;
-  final bool isLoading;
-  final String? errorMessage;
-
-  const ChatState({
-    required this.chat,
-    this.isLoading = false,
-    this.errorMessage,
-  });
-
-  ChatState copyWith({
-    Chat? chat,
-    bool? isLoading,
-    String? errorMessage,
-  }) {
-    return ChatState(
-      chat: chat ?? this.chat,
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-}
-
-abstract class ChatEvent {}
-
-class AddMessageEvent extends ChatEvent {
-  final String sessionId;
-  final Message message;
-
-  AddMessageEvent({
-    required this.sessionId,
-    required this.message,
-  });
-}
-
-class CreateSessionEvent extends ChatEvent {
-  final String sessionId;
-
-  CreateSessionEvent({required this.sessionId});
-}
-
-class ClearSessionMessagesEvent extends ChatEvent {
-  final String sessionId;
-
-  ClearSessionMessagesEvent({required this.sessionId});
-}
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc(Chat initialChat) : super(ChatState(chat: initialChat)) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:simple_chat_ai/chat/chat_view.dart';
-import 'package:simple_chat_ai/logger.dart';
+import 'package:simple_chat_ai/chat/views/chat_view.dart';
+import 'package:simple_chat_ai/utils/logger.dart';
 
 void main() {
   setupLogging();

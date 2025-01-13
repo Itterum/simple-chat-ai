@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:intl/intl.dart';
-import 'package:simple_chat_ai/chat/chat_bloc.dart';
-import 'package:simple_chat_ai/chat/chat_models.dart';
+
+import 'package:simple_chat_ai/chat/bloc/chat_bloc.dart';
+import 'package:simple_chat_ai/chat/bloc/chat_event.dart';
+import 'package:simple_chat_ai/chat/bloc/chat_state.dart';
+import 'package:simple_chat_ai/chat/models/chat_models.dart';
+
 import 'package:uuid/uuid.dart';
 
 class ChatPage extends StatelessWidget {
@@ -68,7 +75,7 @@ class _ChatViewState extends State<ChatView> {
       body: Row(
         children: [
           SizedBox(
-            width: 200,
+            width: Platform.isAndroid ? 50 : 200,
             child: BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
                 return ListView.builder(
@@ -154,20 +161,7 @@ class _ChatViewState extends State<ChatView> {
                 ),
                 hintText: 'Enter your message...',
                 suffixIcon: IconButton(
-                  onPressed: () {
-                    context.read<ChatBloc>().add(
-                          AddMessageEvent(
-                            sessionId: _currentSessionId,
-                            message: Message(
-                              sender: _currentUser,
-                              content: _textController.text.trim(),
-                              timestamp: DateTime.now(),
-                            ),
-                          ),
-                        );
-
-                    _textController.clear();
-                  },
+                  onPressed: () => _onMessageSent(),
                   icon: const Icon(Icons.send),
                 ),
               ),
@@ -222,16 +216,22 @@ class _ChatViewState extends State<ChatView> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                !isCurrentUser && message == session.messages.last
-                    ? StreamBuilder<String>(
-                        stream: _simulateMessageTyping(message.content),
-                        builder: (context, snapshot) {
-                          return Text(snapshot.data ?? '',
-                              style: const TextStyle(fontSize: 16));
-                        },
-                      )
-                    : Text(message.content,
-                        style: const TextStyle(fontSize: 16)),
+                if (!isCurrentUser && message.isTyping)
+                  StreamBuilder<String>(
+                    stream:
+                        _simulateMessageTyping(message.content).map((value) {
+                      if (value == message.content) {
+                        message.isTyping = false;
+                      }
+                      return value;
+                    }),
+                    builder: (context, snapshot) {
+                      return Text(snapshot.data ?? '',
+                          style: const TextStyle(fontSize: 16));
+                    },
+                  )
+                else
+                  Text(message.content, style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 5),
                 Text(
                   DateFormat('HH:mm').format(message.timestamp),
@@ -253,6 +253,21 @@ class _ChatViewState extends State<ChatView> {
       await Future.delayed(const Duration(milliseconds: 50));
       yield fullMessage.substring(0, i);
     }
+  }
+
+  void _onMessageSent() {
+    context.read<ChatBloc>().add(
+          AddMessageEvent(
+            sessionId: _currentSessionId,
+            message: Message(
+              sender: _currentUser,
+              content: _textController.text.trim(),
+              timestamp: DateTime.now(),
+            ),
+          ),
+        );
+
+    _textController.clear();
   }
 
   void _addNewSession() {
