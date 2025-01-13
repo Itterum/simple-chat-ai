@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simple_chat_ai/chat_widget.dart';
+import 'package:simple_chat_ai/chat/chat_view.dart';
 import 'package:simple_chat_ai/logger.dart';
 
 void main() {
@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: ChatWidget(),
+          child: ChatPage(),
         ),
       ),
     );
