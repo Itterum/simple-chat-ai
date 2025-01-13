@@ -2,11 +2,13 @@ class Message {
   final String sender;
   final String content;
   final DateTime timestamp;
+  bool isTyping;
 
-  const Message({
+  Message({
     required this.sender,
     required this.content,
     required this.timestamp,
+    this.isTyping = true,
   });
 
   Map<String, dynamic> toMap() {
