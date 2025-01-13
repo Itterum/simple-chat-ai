@@ -41,16 +41,19 @@ class _ChatViewState extends State<ChatView> {
 
   final String _title = 'Ollama Chat';
 
-  late final String _currentUser;
-  late final String _currentSessionId;
+  late String _currentUser;
+  late String _currentSessionId;
+
+  void init() {
+    final chat = context.read<ChatBloc>().state.chat;
+    _currentUser = chat.userName;
+    _currentSessionId = chat.sessions.first.id;
+  }
 
   @override
   void initState() {
     super.initState();
-
-    final chat = context.read<ChatBloc>().state.chat;
-    _currentUser = chat.userName;
-    _currentSessionId = chat.sessions.first.id;
+    init();
   }
 
   @override
@@ -131,11 +134,7 @@ class _ChatViewState extends State<ChatView> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => context.read<ChatBloc>().add(
-              CreateSessionEvent(
-                sessionId: Uuid().v4().replaceAll('-', '').substring(0, 8),
-              ),
-            ),
+        onPressed: () => _addNewSession(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartFloat,
     );
@@ -256,28 +255,11 @@ class _ChatViewState extends State<ChatView> {
     }
   }
 
-  // int _getSelectedSessionIndex(BuildContext context) {
-  //   final sessions = context.read<ChatBloc>().state.chat.sessions;
-  //   return sessions.indexWhere((session) => session.id == _currentSessionId);
-  // }
-
-  // List<NavigationRailDestination> _buildSessionDestinations(
-  //     BuildContext context) {
-  //   final sessions = context.read<ChatBloc>().state.chat.sessions;
-  //   return sessions
-  //       .map((session) => NavigationRailDestination(
-  //             icon: const Icon(Icons.chat),
-  //             selectedIcon: const Icon(Icons.chat_bubble),
-  //             label: Text(session.id),
-  //           ))
-  //       .toList();
-  // }
-
-  // void _addNewSession() {
-  //   final newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-  //   context.read<ChatBloc>().add(CreateSessionEvent(sessionId: newSessionId));
-  //   setState(() {
-  //     _currentSessionId = newSessionId;
-  //   });
-  // }
+  void _addNewSession() {
+    final newSessionId = Uuid().v4().replaceAll('-', '').substring(0, 8);
+    context.read<ChatBloc>().add(CreateSessionEvent(sessionId: newSessionId));
+    setState(() {
+      _currentSessionId = newSessionId;
+    });
+  }
 }
