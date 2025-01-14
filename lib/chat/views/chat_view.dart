@@ -1,36 +1,23 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'package:simple_chat_ai/chat/bloc/chat_bloc.dart';
-import 'package:simple_chat_ai/chat/bloc/chat_event.dart';
 import 'package:simple_chat_ai/chat/bloc/chat_state.dart';
-import 'package:simple_chat_ai/chat/models/chat_models.dart';
-
-import 'package:uuid/uuid.dart';
+import 'package:simple_chat_ai/chat/models/chat_message_model.dart';
+import 'package:simple_chat_ai/chat/models/chat_model.dart';
+import 'package:simple_chat_ai/chat/models/chat_session_model.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final initialChat = Chat(
-      id: Uuid().v4().replaceAll('-', '').substring(0, 8),
-      userName: 'Ryan Gosling',
-      aiModel: 'codeLlama:7b',
-      sessions: [
-        ChatSession(
-          id: Uuid().v4().replaceAll('-', '').substring(0, 8),
-          messages: [],
-        ),
-      ],
-    );
-
-    return BlocProvider(
-      create: (_) => ChatBloc(initialChat),
+    return BlocProvider<ChatBloc>(
+      create: (_) => ChatBloc(Chat.init()),
       child: const ChatView(),
     );
   }
@@ -48,19 +35,12 @@ class _ChatViewState extends State<ChatView> {
 
   final String _title = 'Ollama Chat';
 
-  late String _currentUser;
-  late String _currentSessionId;
-
-  void init() {
-    final chat = context.read<ChatBloc>().state.chat;
-    _currentUser = chat.userName;
-    _currentSessionId = chat.sessions.first.id;
-  }
+  late Chat _chat;
 
   @override
   void initState() {
     super.initState();
-    init();
+    _chat = context.read<ChatBloc>().state.chat;
   }
 
   @override
@@ -73,18 +53,18 @@ class _ChatViewState extends State<ChatView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
-        children: [
+        children: <Widget>[
           SizedBox(
             width: Platform.isAndroid ? 50 : 200,
             child: BlocBuilder<ChatBloc, ChatState>(
-              builder: (context, state) {
+              builder: (BuildContext context, ChatState state) {
                 return ListView.builder(
                   itemCount: state.chat.sessions.length,
-                  itemBuilder: (context, index) {
-                    final session = state.chat.sessions[index];
+                  itemBuilder: (BuildContext context, int index) {
+                    final ChatSession session = state.chat.sessions[index];
                     return Card(
                       child: ListTile(
-                        selected: session.id == _currentSessionId,
+                        selected: session.id == _chat.currentSessionId,
                         title: Text(
                           session.messages.firstOrNull?.content ??
                               'No messages',
@@ -96,7 +76,7 @@ class _ChatViewState extends State<ChatView> {
                         ),
                         onTap: () {
                           setState(() {
-                            _currentSessionId = session.id;
+                            _chat.currentSessionId = session.id;
                           });
                         },
                       ),
@@ -109,15 +89,15 @@ class _ChatViewState extends State<ChatView> {
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: Column(
-              children: [
+              children: <Widget>[
                 AppBar(
                   title: Text(_title),
                   centerTitle: true,
                 ),
                 BlocBuilder<ChatBloc, ChatState>(
-                  buildWhen: (previous, current) =>
+                  buildWhen: (ChatState previous, ChatState current) =>
                       previous.isLoading != current.isLoading,
-                  builder: (context, state) {
+                  builder: (BuildContext context, ChatState state) {
                     if (state.isLoading) {
                       return const LinearProgressIndicator();
                     }
@@ -126,9 +106,9 @@ class _ChatViewState extends State<ChatView> {
                 ),
                 Expanded(
                   child: BlocBuilder<ChatBloc, ChatState>(
-                    buildWhen: (previous, current) =>
+                    buildWhen: (ChatState previous, ChatState current) =>
                         previous.chat != current.chat,
-                    builder: (context, state) {
+                    builder: (BuildContext context, ChatState state) {
                       return _buildMessagesView(state);
                     },
                   ),
@@ -141,7 +121,7 @@ class _ChatViewState extends State<ChatView> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => _addNewSession(),
+        onPressed: () => _chat.addNewSession(context.read<ChatBloc>()),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartFloat,
     );
@@ -151,7 +131,7 @@ class _ChatViewState extends State<ChatView> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
-        children: [
+        children: <Widget>[
           Expanded(
             child: TextField(
               controller: _textController,
@@ -161,7 +141,11 @@ class _ChatViewState extends State<ChatView> {
                 ),
                 hintText: 'Enter your message...',
                 suffixIcon: IconButton(
-                  onPressed: () => _onMessageSent(),
+                  onPressed: () {
+                    _chat.onMessageSent(
+                        _textController.text, context.read<ChatBloc>());
+                    _textController.clear();
+                  },
                   icon: const Icon(Icons.send),
                 ),
               ),
@@ -173,9 +157,9 @@ class _ChatViewState extends State<ChatView> {
   }
 
   Widget _buildMessagesView(ChatState state) {
-    final session = state.chat.sessions.firstWhere(
-      (session) => session.id == _currentSessionId,
-      orElse: () => ChatSession(id: _currentSessionId, messages: []),
+    final ChatSession session = state.chat.sessions.firstWhere(
+      (ChatSession session) => session.id == _chat.currentSessionId,
+      orElse: () => ChatSession(id: _chat.currentSessionId, messages: <Message>[]),
     );
 
     if (session.messages.isEmpty) {
@@ -184,9 +168,9 @@ class _ChatViewState extends State<ChatView> {
 
     return ListView.builder(
       itemCount: session.messages.length,
-      itemBuilder: (context, index) {
-        final message = session.messages[index];
-        final isCurrentUser = message.sender == _currentUser;
+      itemBuilder: (BuildContext context, int index) {
+        final Message message = session.messages[index];
+        final bool isCurrentUser = message.sender == _chat.userName;
 
         return Align(
           alignment:
@@ -207,7 +191,7 @@ class _ChatViewState extends State<ChatView> {
               crossAxisAlignment: isCurrentUser
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
-              children: [
+              children: <Widget>[
                 Text(
                   message.sender,
                   style: TextStyle(
@@ -218,14 +202,15 @@ class _ChatViewState extends State<ChatView> {
                 const SizedBox(height: 5),
                 if (!isCurrentUser && message.isTyping)
                   StreamBuilder<String>(
-                    stream:
-                        _simulateMessageTyping(message.content).map((value) {
+                    stream: _chat
+                        .simulateMessageTyping(message.content)
+                        .map((String value) {
                       if (value == message.content) {
                         message.isTyping = false;
                       }
                       return value;
                     }),
-                    builder: (context, snapshot) {
+                    builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                       return Text(snapshot.data ?? '',
                           style: const TextStyle(fontSize: 16));
                     },
@@ -246,35 +231,5 @@ class _ChatViewState extends State<ChatView> {
         );
       },
     );
-  }
-
-  Stream<String> _simulateMessageTyping(String fullMessage) async* {
-    for (int i = 1; i <= fullMessage.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      yield fullMessage.substring(0, i);
-    }
-  }
-
-  void _onMessageSent() {
-    context.read<ChatBloc>().add(
-          AddMessageEvent(
-            sessionId: _currentSessionId,
-            message: Message(
-              sender: _currentUser,
-              content: _textController.text.trim(),
-              timestamp: DateTime.now(),
-            ),
-          ),
-        );
-
-    _textController.clear();
-  }
-
-  void _addNewSession() {
-    final newSessionId = Uuid().v4().replaceAll('-', '').substring(0, 8);
-    context.read<ChatBloc>().add(CreateSessionEvent(sessionId: newSessionId));
-    setState(() {
-      _currentSessionId = newSessionId;
-    });
   }
 }

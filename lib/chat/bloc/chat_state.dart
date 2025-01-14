@@ -1,4 +1,4 @@
-import 'package:simple_chat_ai/chat/models/chat_models.dart';
+import 'package:simple_chat_ai/chat/models/chat_model.dart';
 
 class ChatState {
   final Chat chat;

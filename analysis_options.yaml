@@ -1,1 +1,10 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - avoid_print
+    - always_put_control_body_on_new_line
+    - always_specify_types
+    - prefer_const_constructors
+    - directives_ordering
+  
