@@ -13,7 +13,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc(Chat initialChat) : super(ChatState(chat: initialChat)) {
     on<AddMessageEvent>(_onAddMessage);
     on<CreateSessionEvent>(_onCreateSession);
-    // on<InitialSessionEvent>(_onInitialSession);
   }
 
   Future<void> _onAddMessage(

@@ -32,20 +32,26 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   final String _title = 'Ollama Chat';
 
   late bool _isSelected;
 
-  @override
-  void initState() {
-    super.initState();
-    // context.read<ChatBloc>().state.chat.currentSessionId = 
+  void _scrollToEnd() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -63,9 +69,14 @@ class _ChatViewState extends State<ChatView> {
               Expanded(
                 child: BlocBuilder<ChatBloc, ChatState>(
                   builder: (BuildContext context, ChatState state) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollToEnd();
+                    });
+
                     return SizedBox(
                       height: 50,
                       child: ListView.builder(
+                        controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         itemCount: state.chat.sessions.length,
                         itemBuilder: (BuildContext context, int index) {
