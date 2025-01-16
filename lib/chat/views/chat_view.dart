@@ -98,9 +98,8 @@ class _ChatViewState extends State<ChatView> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      // session.messages.firstOrNull?.content ??
-                                      //     'No messages',
-                                      session.id,
+                                      session.messages.firstOrNull?.content ??
+                                          'No messages',
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
