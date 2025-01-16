@@ -13,6 +13,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc(Chat initialChat) : super(ChatState(chat: initialChat)) {
     on<AddMessageEvent>(_onAddMessage);
     on<CreateSessionEvent>(_onCreateSession);
+    // on<InitialSessionEvent>(_onInitialSession);
   }
 
   Future<void> _onAddMessage(
@@ -26,7 +27,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             .messages,
       );
 
-      final List<ChatSession> updateSessions = state.chat.sessions.map((ChatSession session) {
+      final List<ChatSession> updateSessions =
+          state.chat.sessions.map((ChatSession session) {
         if (session.id == event.sessionId) {
           messages.add(Message(
             sender: event.message.sender,
@@ -43,12 +45,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isLoading: true,
       ));
 
-      final List<String> response = await ChatService.sendMessage(event.message.content);
+      final List<String> response =
+          await ChatService.sendMessage(event.message.content);
 
       final StringBuffer aiResponse = StringBuffer();
 
       for (String line in response) {
-        if (line.trim().isEmpty) continue;
+        if (line.trim().isEmpty) {
+          continue;
+        }
 
         final data = jsonDecode(line);
         aiResponse.write(data['message']['content']);
@@ -60,10 +65,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             timestamp: DateTime.now(),
           );
 
-          final List<ChatSession> updatedSessionsWithAI = state.chat.sessions.map((ChatSession session) {
+          final List<ChatSession> updatedSessionsWithAI =
+              state.chat.sessions.map((ChatSession session) {
             if (session.id == event.sessionId) {
-              final List<Message> updatedMessages = List<Message>.from(session.messages)
-                ..add(aiMessage);
+              final List<Message> updatedMessages =
+                  List<Message>.from(session.messages)..add(aiMessage);
               return session.copyWith(messages: updatedMessages);
             }
             return session;
@@ -84,14 +90,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   void _onCreateSession(CreateSessionEvent event, Emitter<ChatState> emit) {
-    final ChatSession newSession = ChatSession(id: event.sessionId, messages: <Message>[]);
+    final ChatSession newSession =
+        ChatSession(id: event.sessionId, messages: <Message>[]);
 
-    if (state.chat.sessions.any((ChatSession session) => session.id == event.sessionId)) {
+    if (state.chat.sessions
+        .any((ChatSession session) => session.id == event.sessionId)) {
       return;
     }
 
     emit(state.copyWith(
-      chat: state.chat.copyWith(sessions: <ChatSession>[...state.chat.sessions, newSession]),
+      chat: state.chat.copyWith(
+          sessions: <ChatSession>[...state.chat.sessions, newSession]),
     ));
   }
 }

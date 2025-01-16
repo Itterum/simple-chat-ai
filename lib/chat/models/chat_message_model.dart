@@ -12,7 +12,7 @@ class Message {
   });
 
   Map<String, dynamic> toMap() {
-    return <String, >{
+    return {
       'sender': sender,
       'content': content,
       'timestamp': timestamp.millisecondsSinceEpoch,

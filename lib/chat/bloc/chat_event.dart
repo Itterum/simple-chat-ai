@@ -12,6 +12,12 @@ class AddMessageEvent extends ChatEvent {
   });
 }
 
+class InitialSessionEvent extends ChatEvent {
+  final String sessionId;
+
+  InitialSessionEvent({required this.sessionId});
+}
+
 class CreateSessionEvent extends ChatEvent {
   final String sessionId;
 

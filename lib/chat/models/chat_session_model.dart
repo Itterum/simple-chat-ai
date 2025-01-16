@@ -32,8 +32,7 @@ class ChatSession {
     return ChatSession(
       id: map['id'],
       messages: List<Message>.from(
-          map['messages']?.map((x) => Message.fromMap(x)) ??
-              <String, dynamic>[]),
+          map['messages']?.map((x) => Message.fromMap(x)) ?? []),
     );
   }
 }

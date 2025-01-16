@@ -1,5 +1,3 @@
-import 'package:simple_chat_ai/chat/bloc/chat_bloc.dart';
-import 'package:simple_chat_ai/chat/bloc/chat_event.dart';
 import 'package:simple_chat_ai/chat/models/chat_message_model.dart';
 import 'package:simple_chat_ai/chat/models/chat_session_model.dart';
 import 'package:simple_chat_ai/utils/generate_id.dart';
@@ -18,21 +16,24 @@ class Chat {
     required this.userName,
     required this.aiModel,
     required this.sessions,
-  }) {
-    currentSessionId = sessions.first.id;
-  }
+    required this.currentSessionId,
+  });
 
   factory Chat.init() {
+    final chatId = generateShortId();
+    final sessionId = generateShortId();
+
     return Chat(
-      id: generateShortId(),
+      id: chatId,
       userName: 'Ryan Gosling',
       aiModel: 'codeLlama:7b',
       sessions: <ChatSession>[
         ChatSession(
-          id: generateShortId(),
+          id: sessionId,
           messages: <Message>[],
         ),
       ],
+      currentSessionId: sessionId,
     );
   }
 
@@ -41,12 +42,14 @@ class Chat {
     String? userName,
     String? aiModel,
     ChatSessions? sessions,
+    String? currentSessionId,
   }) {
     return Chat(
       id: id ?? this.id,
       userName: userName ?? this.userName,
       aiModel: aiModel ?? this.aiModel,
       sessions: sessions ?? this.sessions,
+      currentSessionId: currentSessionId ?? this.currentSessionId,
     );
   }
 
@@ -65,29 +68,9 @@ class Chat {
       userName: map['userName'],
       aiModel: map['aiModel'],
       sessions: List<ChatSession>.from(
-          map['sessions']?.map((x) => ChatSession.fromMap(x)) ?? <>[]),
+          map['sessions']?.map((x) => ChatSession.fromMap(x)) ?? []),
+      currentSessionId: map['currentSessionId'],
     );
-  }
-
-  void onMessageSent(String content, ChatBloc chatBloc) {
-    if (content.trim().isEmpty) return;
-
-    chatBloc.add(
-      AddMessageEvent(
-        sessionId: currentSessionId,
-        message: Message(
-          sender: userName,
-          content: content.trim(),
-          timestamp: DateTime.now(),
-        ),
-      ),
-    );
-  }
-
-  void addNewSession(ChatBloc chatBloc) {
-    final String newSessionId = generateShortId();
-    chatBloc.add(CreateSessionEvent(sessionId: newSessionId));
-    currentSessionId = newSessionId;
   }
 
   Stream<String> simulateMessageTyping(String fullMessage) async* {
