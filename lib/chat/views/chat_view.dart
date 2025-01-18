@@ -1,36 +1,23 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'package:simple_chat_ai/chat/bloc/chat_bloc.dart';
 import 'package:simple_chat_ai/chat/bloc/chat_event.dart';
 import 'package:simple_chat_ai/chat/bloc/chat_state.dart';
-import 'package:simple_chat_ai/chat/models/chat_models.dart';
-
-import 'package:uuid/uuid.dart';
+import 'package:simple_chat_ai/chat/models/chat_message_model.dart';
+import 'package:simple_chat_ai/chat/models/chat_model.dart';
+import 'package:simple_chat_ai/chat/models/chat_session_model.dart';
+import 'package:simple_chat_ai/utils/generate_id.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final initialChat = Chat(
-      id: Uuid().v4().replaceAll('-', '').substring(0, 8),
-      userName: 'Ryan Gosling',
-      aiModel: 'codeLlama:7b',
-      sessions: [
-        ChatSession(
-          id: Uuid().v4().replaceAll('-', '').substring(0, 8),
-          messages: [],
-        ),
-      ],
-    );
-
-    return BlocProvider(
-      create: (_) => ChatBloc(initialChat),
+    return BlocProvider<ChatBloc>(
+      create: (_) => ChatBloc(Chat.init()),
       child: const ChatView(),
     );
   }
@@ -45,109 +32,145 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   final String _title = 'Ollama Chat';
 
-  late String _currentUser;
-  late String _currentSessionId;
+  late bool _isSelected;
 
-  void init() {
-    final chat = context.read<ChatBloc>().state.chat;
-    _currentUser = chat.userName;
-    _currentSessionId = chat.sessions.first.id;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    init();
+  void _scrollToEnd() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      appBar: AppBar(
+        title: Text(_title),
+        centerTitle: true,
+      ),
+      body: Column(
         children: [
-          SizedBox(
-            width: Platform.isAndroid ? 50 : 200,
-            child: BlocBuilder<ChatBloc, ChatState>(
-              builder: (context, state) {
-                return ListView.builder(
-                  itemCount: state.chat.sessions.length,
-                  itemBuilder: (context, index) {
-                    final session = state.chat.sessions[index];
-                    return Card(
-                      child: ListTile(
-                        selected: session.id == _currentSessionId,
-                        title: Text(
-                          session.messages.firstOrNull?.content ??
-                              'No messages',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          'id: ${session.id}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _currentSessionId = session.id;
-                          });
+          Row(
+            children: [
+              Expanded(
+                child: BlocBuilder<ChatBloc, ChatState>(
+                  builder: (BuildContext context, ChatState state) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollToEnd();
+                    });
+
+                    return SizedBox(
+                      height: 50,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: state.chat.sessions.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final ChatSession session =
+                              state.chat.sessions[index];
+                          _isSelected =
+                              session.id == state.chat.currentSessionId;
+
+                          return SizedBox(
+                            width: 150,
+                            child: Card(
+                              elevation: _isSelected ? 2 : 0,
+                              color: Colors.grey[200],
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(
+                                  color: _isSelected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.transparent,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    state.chat.currentSessionId = session.id;
+                                  });
+                                },
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      session.messages.firstOrNull?.content ??
+                                          'No messages',
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
                         },
                       ),
                     );
                   },
-                );
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  final id = generateShortId();
+
+                  context
+                      .read<ChatBloc>()
+                      .add(CreateSessionEvent(sessionId: id));
+
+                  setState(() {
+                    context.read<ChatBloc>().state.chat.currentSessionId = id;
+                  });
+                },
+                icon: const Icon(Icons.add),
+              ),
+            ],
+          ),
+          BlocBuilder<ChatBloc, ChatState>(
+            buildWhen: (ChatState previous, ChatState current) =>
+                previous.isLoading != current.isLoading,
+            builder: (BuildContext context, ChatState state) {
+              if (state.isLoading) {
+                return const LinearProgressIndicator();
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          Expanded(
+            child: BlocBuilder<ChatBloc, ChatState>(
+              buildWhen: (ChatState previous, ChatState current) =>
+                  previous.chat != current.chat,
+              builder: (BuildContext context, ChatState state) {
+                return _buildMessagesView(state);
               },
             ),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: Column(
-              children: [
-                AppBar(
-                  title: Text(_title),
-                  centerTitle: true,
-                ),
-                BlocBuilder<ChatBloc, ChatState>(
-                  buildWhen: (previous, current) =>
-                      previous.isLoading != current.isLoading,
-                  builder: (context, state) {
-                    if (state.isLoading) {
-                      return const LinearProgressIndicator();
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                Expanded(
-                  child: BlocBuilder<ChatBloc, ChatState>(
-                    buildWhen: (previous, current) =>
-                        previous.chat != current.chat,
-                    builder: (context, state) {
-                      return _buildMessagesView(state);
-                    },
-                  ),
-                ),
-                _buildMessageInput(context),
-              ],
-            ),
-          ),
+          _buildMessageInput(context.watch<ChatBloc>().state),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () => _addNewSession(),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartFloat,
     );
   }
 
-  Widget _buildMessageInput(BuildContext context) {
+  Widget _buildMessageInput(ChatState state) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -161,7 +184,20 @@ class _ChatViewState extends State<ChatView> {
                 ),
                 hintText: 'Enter your message...',
                 suffixIcon: IconButton(
-                  onPressed: () => _onMessageSent(),
+                  onPressed: () {
+                    context.read<ChatBloc>().add(
+                          AddMessageEvent(
+                            sessionId: state.chat.currentSessionId,
+                            message: Message(
+                              sender: state.chat.userName,
+                              content: _textController.text,
+                              timestamp: DateTime.now(),
+                            ),
+                          ),
+                        );
+
+                    _textController.clear();
+                  },
                   icon: const Icon(Icons.send),
                 ),
               ),
@@ -173,20 +209,21 @@ class _ChatViewState extends State<ChatView> {
   }
 
   Widget _buildMessagesView(ChatState state) {
-    final session = state.chat.sessions.firstWhere(
-      (session) => session.id == _currentSessionId,
-      orElse: () => ChatSession(id: _currentSessionId, messages: []),
+    final ChatSession session = state.chat.sessions.firstWhere(
+      (ChatSession session) => session.id == state.chat.currentSessionId,
+      orElse: () =>
+          ChatSession(id: state.chat.currentSessionId, messages: <Message>[]),
     );
 
     if (session.messages.isEmpty) {
-      return const Center(child: Text('No messages yet'));
+      return Center(child: Text('No messages yet: ${session.id}'));
     }
 
     return ListView.builder(
       itemCount: session.messages.length,
-      itemBuilder: (context, index) {
-        final message = session.messages[index];
-        final isCurrentUser = message.sender == _currentUser;
+      itemBuilder: (BuildContext context, int index) {
+        final Message message = session.messages[index];
+        final bool isCurrentUser = message.sender == state.chat.userName;
 
         return Align(
           alignment:
@@ -218,14 +255,16 @@ class _ChatViewState extends State<ChatView> {
                 const SizedBox(height: 5),
                 if (!isCurrentUser && message.isTyping)
                   StreamBuilder<String>(
-                    stream:
-                        _simulateMessageTyping(message.content).map((value) {
+                    stream: state.chat
+                        .simulateMessageTyping(message.content)
+                        .map((String value) {
                       if (value == message.content) {
                         message.isTyping = false;
                       }
                       return value;
                     }),
-                    builder: (context, snapshot) {
+                    builder:
+                        (BuildContext context, AsyncSnapshot<String> snapshot) {
                       return Text(snapshot.data ?? '',
                           style: const TextStyle(fontSize: 16));
                     },
@@ -246,35 +285,5 @@ class _ChatViewState extends State<ChatView> {
         );
       },
     );
-  }
-
-  Stream<String> _simulateMessageTyping(String fullMessage) async* {
-    for (int i = 1; i <= fullMessage.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      yield fullMessage.substring(0, i);
-    }
-  }
-
-  void _onMessageSent() {
-    context.read<ChatBloc>().add(
-          AddMessageEvent(
-            sessionId: _currentSessionId,
-            message: Message(
-              sender: _currentUser,
-              content: _textController.text.trim(),
-              timestamp: DateTime.now(),
-            ),
-          ),
-        );
-
-    _textController.clear();
-  }
-
-  void _addNewSession() {
-    final newSessionId = Uuid().v4().replaceAll('-', '').substring(0, 8);
-    context.read<ChatBloc>().add(CreateSessionEvent(sessionId: newSessionId));
-    setState(() {
-      _currentSessionId = newSessionId;
-    });
   }
 }

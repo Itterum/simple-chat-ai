@@ -1,4 +1,4 @@
-import 'package:simple_chat_ai/chat/models/chat_models.dart';
+import 'package:simple_chat_ai/chat/models/chat_message_model.dart';
 
 abstract class ChatEvent {}
 
@@ -10,6 +10,12 @@ class AddMessageEvent extends ChatEvent {
     required this.sessionId,
     required this.message,
   });
+}
+
+class InitialSessionEvent extends ChatEvent {
+  final String sessionId;
+
+  InitialSessionEvent({required this.sessionId});
 }
 
 class CreateSessionEvent extends ChatEvent {
