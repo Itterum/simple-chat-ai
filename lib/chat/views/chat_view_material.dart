@@ -11,8 +11,8 @@ import 'package:simple_chat_ai/chat/models/chat_model.dart';
 import 'package:simple_chat_ai/chat/models/chat_session_model.dart';
 import 'package:simple_chat_ai/utils/generate_id.dart';
 
-class ChatPage extends StatelessWidget {
-  const ChatPage({super.key});
+class ChatPageMaterial extends StatelessWidget {
+  const ChatPageMaterial({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +69,8 @@ class _ChatViewState extends State<ChatView> {
               Expanded(
                 child: BlocBuilder<ChatBloc, ChatState>(
                   builder: (BuildContext context, ChatState state) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _scrollToEnd();
-                    });
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _scrollToEnd());
 
                     return SizedBox(
                       height: 50,
@@ -101,9 +100,8 @@ class _ChatViewState extends State<ChatView> {
                               ),
                               child: InkWell(
                                 onTap: () {
-                                  setState(() {
-                                    state.chat.currentSessionId = session.id;
-                                  });
+                                  setState(() =>
+                                      state.chat.currentSessionId = session.id);
                                 },
                                 child: Center(
                                   child: Padding(
@@ -137,9 +135,11 @@ class _ChatViewState extends State<ChatView> {
                       .read<ChatBloc>()
                       .add(CreateSessionEvent(sessionId: id));
 
-                  setState(() {
-                    context.read<ChatBloc>().state.chat.currentSessionId = id;
-                  });
+                  setState(() => context
+                      .read<ChatBloc>()
+                      .state
+                      .chat
+                      .currentSessionId = id);
                 },
                 icon: const Icon(Icons.add),
               ),
@@ -152,6 +152,7 @@ class _ChatViewState extends State<ChatView> {
               if (state.isLoading) {
                 return const LinearProgressIndicator();
               }
+
               return const SizedBox.shrink();
             },
           ),
