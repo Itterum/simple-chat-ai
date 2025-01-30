@@ -1,24 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:simple_chat_ai/chat/views/chat_view.dart';
-import 'package:simple_chat_ai/utils/logger.dart';
+import 'dart:io' show Platform;
+
+import 'app/app_desktop.dart' if (dart.library.io) './app/app_desktop.dart';
 
 void main() {
-  setupLogging();
-  runApp(const MainApp());
-  logger.info('Application started');
-}
-
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: ChatPage(),
-        ),
-      ),
-    );
+  if (Platform.isWindows) {
+    runDesktop();
+  } else {
+    throw UnsupportedError('This platform is not supported');
   }
 }
