@@ -1,4 +1,4 @@
-import '../../utils/generate_id.dart';
+import '../../../utils/generate_id.dart';
 import 'ai_model.dart';
 import 'chat_session_model.dart';
 import 'message_model.dart';

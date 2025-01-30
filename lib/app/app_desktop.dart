@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../chat/presentation/chat_page_fluent.dart';
+import '../chat/presentation/fluent/chat_page_fluent.dart';
 
 void runDesktop() async {
   WidgetsFlutterBinding.ensureInitialized();

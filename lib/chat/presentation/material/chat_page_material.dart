@@ -3,7 +3,7 @@
 // import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:intl/intl.dart';
 //
-// import 'package:simple_chat_ai/chat/presentation/chat_bloc.dart';
+// import 'package:simple_chat_ai/chat/presentation/ai_bloc.dart';
 // import 'package:simple_chat_ai/utils/generate_id.dart';
 //
 // class ChatPageMaterial extends StatelessWidget {

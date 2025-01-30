@@ -15,13 +15,16 @@ class Details {
     required this.quantizationLevel,
   });
 
-  Details.fromJson(Map<String, dynamic> json)
-      : parentModel = json['parent_model'],
-        format = json['format'],
-        family = json['family'],
-        families = json['families']?.cast<String>(),
-        parameterSize = json['parameter_size'],
-        quantizationLevel = json['quantization_level'];
+  factory Details.fromJson(Map<String, dynamic> json) {
+    return Details(
+      parentModel: json['parent_model'],
+      format: json['format'],
+      family: json['family'],
+      families: json['families']?.cast<String>(),
+      parameterSize: json['parameter_size'],
+      quantizationLevel: json['quantization_level'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'parentModel': parentModel,
@@ -50,13 +53,16 @@ class AIModel {
     required this.details,
   });
 
-  AIModel.fromJson(Map<String, dynamic> json)
-      : name = json['name'],
-        model = json['model'],
-        modifiedAt = json['modified_at'],
-        size = json['size'],
-        digest = json['digest'],
-        details = Details.fromJson(json['details']);
+  factory AIModel.fromJson(Map<String, dynamic> json) {
+    return AIModel(
+      name: json['name'],
+      model: json['model'],
+      modifiedAt: json['modified_at'],
+      size: json['size'],
+      digest: json['digest'],
+      details: Details.fromJson(json['details']),
+    );
+  }
 
   static Map<String, dynamic> toJson(AIModel model) => {
         'name': model.name,
