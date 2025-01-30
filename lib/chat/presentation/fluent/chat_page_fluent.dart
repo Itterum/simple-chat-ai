@@ -92,18 +92,50 @@ class AIWidget extends StatelessWidget {
               ],
             ),
             selectedModel != null
-                ? Text('Name: ${selectedModel?.name}\n'
-                    'Model: ${selectedModel?.model}\n'
-                    'ModifiedAt: ${selectedModel?.modifiedAt}\n'
-                    'Size: ${selectedModel?.size}\n'
-                    'Digest: ${selectedModel?.digest}\n'
-                    'Details:\n'
-                    '- Parent model: ${selectedModel?.details.parentModel}\n'
-                    '- Format: ${selectedModel?.details.format}\n'
-                    '- Family: ${selectedModel?.details.family}\n'
-                    '- Families: ${selectedModel?.details.families}\n'
-                    '- Parameter size: ${selectedModel?.details.parameterSize}\n'
-                    '- Quantization level: ${selectedModel?.details.quantizationLevel}')
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Description',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '''
+Name: ${selectedModel?.name ?? 'N/A'}
+Model: ${selectedModel?.model ?? 'N/A'}
+Modified At: ${selectedModel?.modifiedAt ?? 'N/A'}
+Size: ${selectedModel?.size ?? 'N/A'}
+Digest: ${selectedModel?.digest ?? 'N/A'}
+''',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Details:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '''
+- Parent model: ${selectedModel?.details.parentModel ?? 'N/A'}
+- Format: ${selectedModel?.details.format ?? 'N/A'}
+- Family: ${selectedModel?.details.family ?? 'N/A'}
+- Families: ${selectedModel?.details.families ?? 'N/A'}
+- Parameter size: ${selectedModel?.details.parameterSize ?? 'N/A'}
+- Quantization level: ${selectedModel?.details.quantizationLevel ?? 'N/A'}
+''',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  )
                 : Container(),
           ],
         );
