@@ -125,12 +125,12 @@ Digest: ${selectedModel?.digest ?? 'N/A'}
                       const SizedBox(height: 8),
                       Text(
                         '''
-- Parent model: ${selectedModel?.details.parentModel ?? 'N/A'}
-- Format: ${selectedModel?.details.format ?? 'N/A'}
-- Family: ${selectedModel?.details.family ?? 'N/A'}
-- Families: ${selectedModel?.details.families ?? 'N/A'}
-- Parameter size: ${selectedModel?.details.parameterSize ?? 'N/A'}
-- Quantization level: ${selectedModel?.details.quantizationLevel ?? 'N/A'}
+Parent model: ${selectedModel?.details.parentModel ?? 'N/A'}
+Format: ${selectedModel?.details.format ?? 'N/A'}
+Family: ${selectedModel?.details.family ?? 'N/A'}
+Families: ${selectedModel?.details.families ?? 'N/A'}
+Parameter size: ${selectedModel?.details.parameterSize ?? 'N/A'}
+Quantization level: ${selectedModel?.details.quantizationLevel ?? 'N/A'}
 ''',
                         style: const TextStyle(fontSize: 14),
                       ),
