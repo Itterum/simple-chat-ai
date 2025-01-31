@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/ai_entity.dart';
-import '../../domain/usecases/get_ai_usecase.dart';
+import '../../domain/use_cases/ai_use_case.dart';
 
 abstract class AIState {}
 
@@ -39,7 +39,7 @@ class AIBloc extends Bloc<AIEvent, AIState> {
     this.getAIUseCase,
   ) : super(AIInitial()) {
     on<GetAIEvent>(_onGetAIEvent);
-    on<SetCurrentAIEvent>(_onSetCurrentAI);
+    on<SetCurrentAIEvent>(_onSetCurrentAIEvent);
   }
 
   Future<void> _onGetAIEvent(GetAIEvent event, Emitter<AIState> emit) async {
@@ -54,7 +54,7 @@ class AIBloc extends Bloc<AIEvent, AIState> {
     }
   }
 
-  Future<void> _onSetCurrentAI(
+  Future<void> _onSetCurrentAIEvent(
       SetCurrentAIEvent event, Emitter<AIState> emit) async {
     if (state is AILoaded) {
       final currentState = state as AILoaded;

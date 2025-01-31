@@ -1,3 +1,79 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../domain/entities/ai_entity.dart';
+import '../../domain/entities/chat_entity.dart';
+import '../../domain/use_cases/ai_use_case.dart';
+import '../../domain/use_cases/chat_use_case.dart';
+
+abstract class ChatState {}
+
+class ChatInitial extends ChatState {}
+
+class ChatLoading extends ChatState {}
+
+class ChatLoaded extends ChatState {
+  final ChatEntity chat;
+
+  ChatLoaded(this.chat);
+}
+
+class ChatError extends ChatState {
+  final String message;
+
+  ChatError(this.message);
+}
+
+abstract class ChatEvent {}
+
+class InitialChatEvent extends ChatEvent {
+  final AIEntity aiEntity;
+
+  InitialChatEvent(this.aiEntity);
+}
+
+class SendMessageEvent extends ChatEvent {
+  final String model;
+  final String content;
+
+  SendMessageEvent(this.model, this.content);
+}
+
+class ChatBloc extends Bloc<ChatEvent, ChatState> {
+  final InitialChatUseCase initialChatUseCase;
+  final SendMessageToAIUseCase sendMessageToAIUseCase;
+
+  ChatBloc(this.initialChatUseCase,
+      this.sendMessageToAIUseCase,) : super(ChatInitial()) {
+    on<InitialChatEvent>(_onInitialChatEvent);
+    on<SendMessageEvent>(_onSendMessageToAIEvent);
+  }
+
+  Future<void> _onInitialChatEvent(InitialChatEvent event,
+      Emitter<ChatState> emit) async {
+    emit(ChatLoading());
+
+    try {
+      final chat = initialChatUseCase.execute(event.aiEntity);
+
+      emit(ChatLoaded(chat));
+    } catch (e) {
+      emit(ChatError(e.toString()));
+    }
+  }
+
+  Future<void> _onSendMessageToAIEvent(SendMessageEvent event,
+      Emitter<ChatState> emit) async {
+    emit(ChatLoading());
+
+    try {
+      final message = await sendMessageToAIUseCase.execute(
+          event.model, event.content);
+      // emit()
+    } catch (e) {
+      emit(ChatError(e.toString()));
+    }
+  }
+}
 // class ChatState {
 //   final Chat chat;
 //   final bool isLoading;

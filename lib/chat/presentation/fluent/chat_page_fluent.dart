@@ -1,10 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:simple_chat_ai/chat/presentation/bloc/chat_bloc.dart';
 
-import '../../data/datasources/remote_data_source.dart';
+import '../../data/data_sources/remote_data_source.dart';
 import '../../data/repositories/ai_repository_impl.dart';
 import '../../domain/entities/ai_entity.dart';
-import '../../domain/usecases/get_ai_usecase.dart';
+import '../../domain/use_cases/ai_use_case.dart';
+import '../../domain/use_cases/chat_use_case.dart';
 import '../bloc/ai_bloc.dart';
 
 class ChatPageFluent extends StatelessWidget {
@@ -12,14 +14,28 @@ class ChatPageFluent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AIBloc>(
-      create: (context) => AIBloc(
-        GetAIUseCase(
-          AIRepositoryImpl(
-            RemoteDataSource(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ChatBloc>(
+          create: (context) => ChatBloc(
+            InitialChatUseCase(),
+            SendMessageToAIUseCase(
+              AIRepositoryImpl(
+                RemoteDataSource(),
+              ),
+            ),
           ),
         ),
-      ),
+        BlocProvider<AIBloc>(
+          create: (context) => AIBloc(
+            GetAIUseCase(
+              AIRepositoryImpl(
+                RemoteDataSource(),
+              ),
+            ),
+          ),
+        ),
+      ],
       child: const ChatView(),
     );
   }
