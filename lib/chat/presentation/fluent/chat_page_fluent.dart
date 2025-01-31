@@ -1,10 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:simple_chat_ai/chat/domain/entities/ai_entity.dart';
-import 'package:simple_chat_ai/chat/domain/usecases/get_ai_usecase.dart';
 
 import '../../data/datasources/remote_data_source.dart';
 import '../../data/repositories/ai_repository_impl.dart';
+import '../../domain/entities/ai_entity.dart';
+import '../../domain/usecases/get_ai_usecase.dart';
 import '../bloc/ai_bloc.dart';
 
 class ChatPageFluent extends StatelessWidget {
@@ -40,14 +40,22 @@ class AIWidget extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ComboBox<AIEntity>(
-                value: selectedModel,
-                items: [],
-                placeholder: const Text('Select a model'),
+              SizedBox(
+                height: 40,
+                child: ComboBox<AIEntity>(
+                  value: selectedModel,
+                  items: [],
+                  placeholder: const Text('Select a model'),
+                ),
               ),
-              IconButton(
-                icon: const Icon(FluentIcons.refresh),
-                onPressed: () => {context.read<AIBloc>().add(GetAIEvent())},
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 40,
+                width: 40,
+                child: IconButton(
+                  icon: const Icon(FluentIcons.refresh),
+                  onPressed: () => {context.read<AIBloc>().add(GetAIEvent())},
+                ),
               ),
             ],
           );
@@ -72,22 +80,32 @@ class AIWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ComboBox<AIEntity>(
-                  value: selectedModel,
-                  items: allModels?.map<ComboBoxItem<AIEntity>>((e) {
-                    return ComboBoxItem<AIEntity>(
-                      value: e,
-                      child: Text(e.model),
-                    );
-                  }).toList(),
-                  onChanged: (AIEntity? model) {
-                    context.read<AIBloc>().add(SetCurrentAIEvent(model));
-                  },
-                  placeholder: const Text('Select a model'),
+                SizedBox(
+                  height: 40,
+                  child: ComboBox<AIEntity>(
+                    value: selectedModel,
+                    items: allModels?.map<ComboBoxItem<AIEntity>>((e) {
+                      return ComboBoxItem<AIEntity>(
+                        value: e,
+                        child: Text(e.model),
+                      );
+                    }).toList(),
+                    onChanged: (AIEntity? model) {
+                      context.read<AIBloc>().add(SetCurrentAIEvent(model));
+                    },
+                    placeholder: const Text('Select a model'),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(FluentIcons.refresh),
-                  onPressed: () => {context.read<AIBloc>().add(GetAIEvent())},
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: IconButton(
+                    icon: const Icon(
+                      FluentIcons.refresh,
+                    ),
+                    onPressed: () => {context.read<AIBloc>().add(GetAIEvent())},
+                  ),
                 ),
               ],
             ),
@@ -155,10 +173,13 @@ class _ChatViewState extends State<ChatView> {
   final TextEditingController _textController = TextEditingController();
 
   final String _title = 'Ollama Chat';
+  late int topIndex = 0;
+  late PaneDisplayMode displayMode = PaneDisplayMode.compact;
 
   @override
   void initState() {
     super.initState();
+    context.read<AIBloc>().add(GetAIEvent());
   }
 
   @override
@@ -171,10 +192,18 @@ class _ChatViewState extends State<ChatView> {
   Widget build(BuildContext context) {
     return NavigationView(
       pane: NavigationPane(
-        // selected: _selectedIndex,
-        // onChanged: (int index) {
-        //   setState(() => _selectedIndex = index);
-        // },
+        selected: topIndex,
+        onItemPressed: (index) {
+          if (index == topIndex) {
+            if (displayMode == PaneDisplayMode.open) {
+              setState(() => displayMode = PaneDisplayMode.compact);
+            } else if (displayMode == PaneDisplayMode.compact) {
+              setState(() => displayMode = PaneDisplayMode.open);
+            }
+          }
+        },
+        onChanged: (index) => setState(() => topIndex = index),
+        displayMode: displayMode,
         items: <NavigationPaneItem>[
           PaneItem(
             icon: const Icon(FluentIcons.home),
