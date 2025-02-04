@@ -11,9 +11,9 @@ class AILoading extends AIState {}
 
 class AILoaded extends AIState {
   final AIEntity? ai;
-  final List<AIEntity>? allAI;
+  final List<AIEntity?> allAI;
 
-  AILoaded({this.ai, this.allAI});
+  AILoaded({this.ai, required this.allAI});
 }
 
 class AIError extends AIState {

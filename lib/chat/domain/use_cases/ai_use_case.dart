@@ -17,7 +17,7 @@ class SendMessageToAIUseCase {
 
   SendMessageToAIUseCase(this.repository);
 
-  Future<MessageEntity> execute(String model, String content) {
+  Future<MessageEntity> execute(AIEntity model, String content) {
     return repository.sendMessage(model, content);
   }
 }

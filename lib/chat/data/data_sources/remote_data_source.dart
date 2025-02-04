@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../utils/logger.dart';
+import '../../domain/entities/ai_entity.dart';
 import '../models/ai_model.dart';
 import '../models/ai_response.dart';
 
@@ -33,11 +34,11 @@ class RemoteDataSource {
     return models;
   }
 
-  Future<AIResponse> sendMessageToAI(String? model, String content) async {
+  Future<AIResponse> sendMessageToAI(AIEntity model, String content) async {
     final http.Response response = await http.post(
       Uri.parse('http://localhost:11434/api/chat'),
       body: jsonEncode({
-        'model': model ?? 'codeLlama:7b',
+        'model': model.model,
         'messages': [
           {'role': 'user', 'content': content},
         ],

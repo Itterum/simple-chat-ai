@@ -1,13 +1,23 @@
-import '../../../utils/generate_id.dart';
+import '../../data/repositories/chat_repository.dart';
 import '../entities/ai_entity.dart';
 import '../entities/chat_entity.dart';
 
 class InitialChatUseCase {
-  ChatEntity execute(AIEntity entity) {
-    return ChatEntity(
-      id: generateShortId(),
-      aiEntity: entity,
-      messages: [],
-    );
+  final ChatRepository repository;
+
+  InitialChatUseCase(this.repository);
+
+  Future<ChatEntity> execute(AIEntity entity) async {
+    return repository.createChat(entity);
+  }
+}
+
+class GetChatsUseCase {
+  final ChatRepository repository;
+
+  GetChatsUseCase(this.repository);
+
+  Future<List<ChatEntity>> execute() async {
+    return repository.getChats();
   }
 }
