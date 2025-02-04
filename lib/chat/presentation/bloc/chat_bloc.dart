@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/ai_entity.dart';
 import '../../domain/entities/chat_entity.dart';
-import '../../domain/use_cases/ai_use_case.dart';
 import '../../domain/use_cases/chat_use_case.dart';
 
 abstract class ChatState {}
@@ -32,21 +31,18 @@ class InitialChatEvent extends ChatEvent {
 }
 
 class SendMessageEvent extends ChatEvent {
+  final String chatId;
   final AIEntity model;
   final String content;
 
-  SendMessageEvent(this.model, this.content);
+  SendMessageEvent(this.chatId, this.model, this.content);
 }
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final InitialChatUseCase initialChatUseCase;
-  final GetChatsUseCase getChatsUseCase;
-  final SendMessageToAIUseCase sendMessageToAIUseCase;
+  final ChatUseCase chatUseCase;
 
   ChatBloc(
-    this.initialChatUseCase,
-    this.getChatsUseCase,
-    this.sendMessageToAIUseCase,
+    this.chatUseCase,
   ) : super(ChatInitial()) {
     on<InitialChatEvent>(_onInitialChatEvent);
     on<SendMessageEvent>(_onSendMessageToAIEvent);
@@ -57,8 +53,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(ChatLoading());
 
     try {
-      initialChatUseCase.execute(event.aiEntity!);
-      final List<ChatEntity> chats = await getChatsUseCase.execute();
+      chatUseCase.init(event.aiEntity!);
+      final List<ChatEntity> chats = await chatUseCase.getChats();
       emit(ChatLoaded(chats));
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -71,12 +67,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       final message =
-          await sendMessageToAIUseCase.execute(event.model, event.content);
-      if (state is ChatLoaded) {
-        final currentChats = List<ChatEntity>.from((state as ChatLoaded).chats);
-        emit(ChatLoaded(currentChats));
-      }
-      // emit(ChatLoaded(message));
+          await chatUseCase.sendMessageToAI(event.model, event.content);
+      await chatUseCase.addMessage(event.chatId, message);
+
+      final List<ChatEntity> chats = await chatUseCase.getChats();
+      emit(ChatLoaded(chats));
     } catch (e) {
       emit(ChatError(e.toString()));
     }

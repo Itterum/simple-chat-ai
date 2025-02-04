@@ -33,10 +33,10 @@ class SetCurrentAIEvent extends AIEvent {
 }
 
 class AIBloc extends Bloc<AIEvent, AIState> {
-  final GetAIUseCase getAIUseCase;
+  final AIUseCase aiUseCase;
 
   AIBloc(
-    this.getAIUseCase,
+    this.aiUseCase,
   ) : super(AIInitial()) {
     on<GetAIEvent>(_onGetAIEvent);
     on<SetCurrentAIEvent>(_onSetCurrentAIEvent);
@@ -46,7 +46,7 @@ class AIBloc extends Bloc<AIEvent, AIState> {
     emit(AILoading());
 
     try {
-      final allAI = await getAIUseCase.execute();
+      final allAI = await aiUseCase.getAI();
 
       emit(AILoaded(allAI: allAI));
     } catch (e) {

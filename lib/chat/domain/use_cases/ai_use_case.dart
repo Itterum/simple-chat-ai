@@ -2,22 +2,16 @@ import '../../data/repositories/ai_repository.dart';
 import '../entities/ai_entity.dart';
 import '../entities/message_entity.dart';
 
-class GetAIUseCase {
+class AIUseCase {
   final AIRepository repository;
 
-  GetAIUseCase(this.repository);
+  AIUseCase(this.repository);
 
-  Future<List<AIEntity>> execute() {
+  Future<List<AIEntity>> getAI() {
     return repository.getAI();
   }
-}
 
-class SendMessageToAIUseCase {
-  final AIRepository repository;
-
-  SendMessageToAIUseCase(this.repository);
-
-  Future<MessageEntity> execute(AIEntity model, String content) {
+  Future<MessageEntity> sendMessage(AIEntity model, String content) {
     return repository.sendMessage(model, content);
   }
 }
