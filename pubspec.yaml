@@ -7,7 +7,6 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
-  fluent_ui: ^4.10.0
   flutter_acrylic: ^1.1.4
   flutter:
     sdk: flutter
